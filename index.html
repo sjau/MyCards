@@ -104,8 +104,10 @@ const FMTS=[['QR','QR code'],['CODE128','Code 128'],['EAN13','EAN-13'],['EAN8','
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const NS=location.pathname.replace(/[^/]+$/,''); // per-instance namespace: a copy of the app at another path gets its own token/cards
 const L=(k,d)=>{try{return JSON.parse(localStorage.getItem(NS+k))??d}catch{return d}}, W=(k,v)=>localStorage.setItem(NS+k,JSON.stringify(v));
-// one-time: the first instance that loads takes over the old unscoped storage
-for(const k of ['cards','usage','token','role','tab','shape'])if(localStorage.getItem(NS+k)===null&&localStorage.getItem(k)!==null){localStorage.setItem(NS+k,localStorage.getItem(k));localStorage.removeItem(k)}
+// one-time: take over the old unscoped storage — only if the old key is valid on this instance's server, so copies never steal the original's data
+const lg=localStorage.getItem(NS+'token')===null&&localStorage.getItem('token');
+if(lg){let t;try{t=JSON.parse(lg)}catch{t=lg}
+  fetch('api.php?a=me',{headers:{'X-Token':t}}).then(r=>{if(!r.ok)return;for(const k of ['cards','usage','token','role','tab','shape'])if(localStorage.getItem(NS+k)===null&&localStorage.getItem(k)!==null){localStorage.setItem(NS+k,localStorage.getItem(k));localStorage.removeItem(k)}location.reload()}).catch(()=>{})}
 let cards=L('cards',{}), usage=L('usage',{}), token=L('token',''), role=L('role',''), tab=L('tab','loyalty'); tab='loyalty'; // always open on cards
 const iu=n=>`api.php?a=img&n=${n}&t=${encodeURIComponent(token)}`;
 const save=()=>W('cards',cards);
@@ -529,7 +531,7 @@ function setup(msg){
 $('#sync').onclick=()=>{if(confirm('Wallet '+VER+'\n\nSync now?\n\nCancel = change token'))sync();else setup()};
 
 /* ---------- start ---------- */
-const VER='v11';
+const VER='v12';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
