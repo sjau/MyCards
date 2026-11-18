@@ -538,7 +538,7 @@ function setup(msg){
 $('#sync').onclick=()=>{if(confirm('MyCards '+VER+'\n\nSync now?\n\nCancel = change token'))sync();else setup()};
 
 /* ---------- start ---------- */
-const VER='v17';
+const VER='v18';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
