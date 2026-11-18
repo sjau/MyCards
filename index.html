@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#121212">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
-<title>Wallet</title>
+<title>MyCards</title>
 <style>
 :root{--bg:#f2f2f4;--ink:#111;--mute:#6b6b70;--line:#dcdce0;--surf:#fff;--acc:#ff5a36;--hd:#fff}
 @media(prefers-color-scheme:dark){:root{--bg:#000;--ink:#f4f4f4;--mute:#8e8e93;--line:#2a2a2c;--surf:#161618;--acc:#ff5a36;--hd:#121212}}
@@ -531,10 +531,10 @@ function setup(msg){
   const t=prompt((msg||'')+'Enter your access key (from api.php).',token);
   if(t!==null){token=t.trim();W('token',token);role='';W('role','');sync()}
 }
-$('#sync').onclick=()=>{if(confirm('Wallet '+VER+'\n\nSync now?\n\nCancel = change token'))sync();else setup()};
+$('#sync').onclick=()=>{if(confirm('MyCards '+VER+'\n\nSync now?\n\nCancel = change token'))sync();else setup()};
 
 /* ---------- start ---------- */
-const VER='v15';
+const VER='v16';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
