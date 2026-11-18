@@ -204,14 +204,14 @@ function drawCode(host,c){
 
 /* ---------- view card ---------- */
 let wl=null;
-const ICN={n:'<svg viewBox="0 0 24 24"><path d="M5 4h10l4 4v12H5z"/><path d="M8 12h8M8 16h6"/></svg>',c:'<svg viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',s:'<svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 11l7.6-4M8.2 13l7.6 4"/></svg>'};
+const ICN={n:'<svg viewBox="0 0 24 24"><path d="M5 4h10l4 4v12H5z"/><path d="M8 12h8M8 16h6"/></svg>',c:'<svg viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',s:'<svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 11l7.6-4M8.2 13l7.6 4"/></svg>',m:'<svg viewBox="0 0 24 24"><path d="M4 9h13l-3-3m3 3l-3 3M20 15H7l3-3m-3 3l3 3"/></svg>'};
 function fillView(c){
   const v=$('#view'),loy=CARD(c),id=c.id,wr=role!=='read';
   const olds=srt((c.imgs||[]).filter(i=>i.old));
   const photos=`${srt(cur_(c)).map(imgTag).join('')}${olds.length?`<details><summary style="color:var(--mute);margin:10px 0">Older versions (${olds.length})</summary>${olds.map(imgTag).join('')}</details>`:''}`;
   const notes=c.notes?`<div class="notes">${esc(c.notes)}</div>`:'';
   const codeBox=c.code?`<div class="code"><div id="bc"></div><div class="num">${esc(c.code)}</div></div>`:'';
-  const acts=`<div class="acts">${wr?`<button data-a="n">${ICN.n}Notes</button><button data-a="p">${ICN.c}Card Pictures</button>`:''}<button data-a="s">${ICN.s}Share Card</button></div>`;
+  const acts=`<div class="acts">${wr?`<button data-a="n">${ICN.n}Notes</button><button data-a="p">${ICN.c}Card Pictures</button><button data-a="m">${ICN.m}Move</button>`:''}<button data-a="s">${ICN.s}Share Card</button></div>`;
   const banner=c.country&&!loy?`<div class="lc" style="background:linear-gradient(135deg,${c.color},${shade(c.color)});text-align:center"><div style="font-size:72px;line-height:1.15">${flag(c.country)}</div><div class="tg" style="font-size:15px">${esc((c.dtype&&DTS.find(x=>x[0]===c.dtype)[1]||'')+' · '+countryName(c.country))}</div></div>`:'';
   v.innerHTML=`<div class="bar"><button class="ib" id="b1">←</button><h2>${esc(loy?c.name:full(c))}</h2>${wr?'<button class="tl" id="ed">Edit</button>':''}</div><div class="pane">`+
     (loy?`<div class="lc2">${headHTML(c)}${codeBox}</div>${acts}${notes}${photos}`
@@ -219,7 +219,7 @@ function fillView(c){
   if(c.code)drawCode(v.querySelector('#bc'),c);
   v.querySelector('#b1').onclick=back;
   const ed=v.querySelector('#ed');if(ed)ed.onclick=()=>openEdit(id);
-  v.querySelectorAll('.acts [data-a]').forEach(b=>b.onclick=()=>{const a=b.dataset.a;if(a==='n')openNotes(c);if(a==='p')openEdit(id,undefined,true);if(a==='s')shareCard(c)});
+  v.querySelectorAll('.acts [data-a]').forEach(b=>b.onclick=()=>{const a=b.dataset.a;if(a==='n')openNotes(c);if(a==='p')openEdit(id,undefined,true);if(a==='m')openMove(c);if(a==='s')shareCard(c)});
   v.querySelectorAll('img.p').forEach(i=>i.onclick=()=>{const z=$('#zoom');z.className='ov';z.innerHTML=`<img src="${i.src}">`;z.onclick=back;show(z);z.style.display='block'});
 }
 async function shareCard(c){const t=`${full(c)}: ${c.code}`;try{if(navigator.share)await navigator.share({title:c.name,text:t});else{await navigator.clipboard.writeText(t);alert('Copied to clipboard.')}}catch{}}
@@ -227,6 +227,10 @@ function openNotes(c){const md=$('#ask');
   md.innerHTML=`<div><div style="font-weight:600;margin-bottom:8px">Notes</div><textarea class="in" id="nt2" rows="5">${esc(c.notes||'')}</textarea><div class="row" style="margin-top:12px"><button class="btn" id="n0">Cancel</button><button class="btn pri" id="n1" style="margin-left:auto">Save</button></div></div>`;
   md.querySelector('#n0').onclick=back;
   md.querySelector('#n1').onclick=()=>{c.notes=md.querySelector('#nt2').value.trim();c.u=Date.now();save();push(c).catch(()=>{});back()};
+  md.onclose=()=>fillView(c);show(md)}
+function openMove(c){const md=$('#ask');
+  md.innerHTML=`<div><div style="font-weight:600;margin-bottom:10px">Move card to</div>${CATS.map(([k,n])=>`<button class="btn ${k===c.cat?'pri':''}" data-k="${k}" style="width:100%;margin-top:6px">${n}</button>`).join('')}</div>`;
+  md.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k;if(k===c.cat)return back();c.cat=k;c.u=Date.now();save();push(c).catch(()=>{});tab=k;closeAll(2);toast('Moved to '+(CATS.find(x=>x[0]===k)||[])[1])});
   md.onclose=()=>fillView(c);show(md)}
 async function openCard(id){
   const c=cards[id];usage[id]=(usage[id]||0)+1;W('usage',usage);
@@ -534,7 +538,7 @@ function setup(msg){
 $('#sync').onclick=()=>{if(confirm('MyCards '+VER+'\n\nSync now?\n\nCancel = change token'))sync();else setup()};
 
 /* ---------- start ---------- */
-const VER='v16';
+const VER='v17';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
