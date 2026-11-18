@@ -47,6 +47,15 @@ server {
 4. First start asks for the access key. Each person enters their own key.
 5. Revoke access: delete that key's line in data/keys.php. Their app stops syncing and wipes its local copy the next time it connects.
 
+# A SECOND COPY (E.G. FOR TESTING)
+You can run several copies side by side, e.g. https://example.com/MyCards/ and
+https://example.com/MyCardsTest/. Upload the app files again into the new folder
+(put it next to the first one, not inside it) and give the copy its own data/ folder:
+copy keys.example.php to data/keys.php, add a key for it, and keep data/ protected
+(Apache: data/.htaccess; nginx: the deny rule above). The app keeps access key, cards
+and offline cache separate per folder, so the copies never mix, even in the same
+browser. Note: renaming or moving a folder makes the browser treat it as a fresh install.
+
 # CARD ARTWORK
 art/*.png are the logos used on the cards. To add one for another store:
 1. put art/<id>.png in the folder

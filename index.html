@@ -102,7 +102,10 @@ const CATS=[['loyalty','Cards'],['id','IDs'],['docs','Papers'],['other','Other']
 const COLORS=['#1f3a34','#b3261e','#1d4ed8','#6d28d9','#b45309','#0f766e','#374151','#be185d'];
 const FMTS=[['QR','QR code'],['CODE128','Code 128'],['EAN13','EAN-13'],['EAN8','EAN-8'],['UPC','UPC-A'],['CODE39','Code 39'],['ITF','ITF'],['none','Number only']];
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const L=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}, W=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const NS=location.pathname.replace(/[^/]+$/,''); // per-instance namespace: a copy of the app at another path gets its own token/cards
+const L=(k,d)=>{try{return JSON.parse(localStorage.getItem(NS+k))??d}catch{return d}}, W=(k,v)=>localStorage.setItem(NS+k,JSON.stringify(v));
+// one-time: the first instance that loads takes over the old unscoped storage
+for(const k of ['cards','usage','token','role','tab','shape'])if(localStorage.getItem(NS+k)===null&&localStorage.getItem(k)!==null){localStorage.setItem(NS+k,localStorage.getItem(k));localStorage.removeItem(k)}
 let cards=L('cards',{}), usage=L('usage',{}), token=L('token',''), role=L('role',''), tab=L('tab','loyalty'); tab='loyalty'; // always open on cards
 const iu=n=>`api.php?a=img&n=${n}&t=${encodeURIComponent(token)}`;
 const save=()=>W('cards',cards);
@@ -129,7 +132,7 @@ const imgTag=m=>`<div class="cap">${esc(capText(m))}</div><img class="p" src="${
 async function api(a,opt={},q=''){const r=await fetch(`api.php?a=${a}${q}`,{...opt,headers:{'X-Token':token,...(opt.headers||{})}});if(!r.ok)throw new Error(r.status);return r}
 async function wipe(){ // key was valid before and is now rejected: remove local copy
   cards={};usage={};role='';save();W('usage',{});W('role','');
-  try{const c=await caches.open('wallet-v9');for(const r of await c.keys())if(r.url.includes('a=img'))await c.delete(r)}catch{}
+  try{const c=await caches.open('wallet-'+VER+NS);for(const r of await c.keys())if(r.url.includes('a=img'))await c.delete(r)}catch{} // same cache name as C in sw.js
   render()}
 async function push(c){return api('put',{method:'POST',body:JSON.stringify(c)})}
 async function sync(){
@@ -465,7 +468,7 @@ function cropper(src,shapeOv,maxPx){return new Promise(res=>{
       };
     const relayout=()=>{layout();fit();ui();draw()};
     o.querySelectorAll('.sh').forEach(b=>b.onclick=()=>{shape=+b.dataset.i;W_(shape);portrait=false;relayout()});
-    const W_=v=>localStorage.setItem('shape',JSON.stringify(v));
+    const W_=v=>W('shape',v);
     o.querySelector('#or').onclick=()=>{portrait=!portrait;relayout()};
             o.querySelector('#rl').onclick=()=>{ang=Math.round(ang/90)*90-90;fine=0;o.querySelector('#fn').value=0;relayout()};
     o.querySelector('#rr').onclick=()=>{ang=Math.round(ang/90)*90+90;fine=0;o.querySelector('#fn').value=0;relayout()};
@@ -526,7 +529,7 @@ function setup(msg){
 $('#sync').onclick=()=>{if(confirm('Wallet '+VER+'\n\nSync now?\n\nCancel = change token'))sync();else setup()};
 
 /* ---------- start ---------- */
-const VER='v9';
+const VER='v11';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
