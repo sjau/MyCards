@@ -511,7 +511,7 @@ function scan(){return new Promise(async res=>{
   o.querySelector('#sb').onclick=()=>fin(null);
   o.querySelector('#sm').onclick=()=>fin({code:'',fmt:'CODE128',manual:true});
   show(o);if(!has)return;
-  const det=new BarcodeDetector(),hit=r=>fin({code:r.rawValue,fmt:MAP[r.format]||'none'});
+  const det=new BarcodeDetector(),hit=r=>{const f=MAP[r.format],n=f&&(FMTS.find(x=>x[0]===f)||[])[1],v=r.rawValue.length>32?r.rawValue.slice(0,32)+'…':r.rawValue;toast(f?'Read: '+n+' · '+v:'Unsupported code type: '+r.format);fin({code:r.rawValue,fmt:f||'none'})};
   o.querySelector('#si').onclick=()=>o.querySelector('#sf').click();
   o.querySelector('#sf').onchange=async ev=>{const f=ev.target.files[0];if(!f)return;
     try{const r=await det.detect(await createImageBitmap(f));if(r.length)return hit(r[0])}catch{}
@@ -531,7 +531,7 @@ function setup(msg){
 $('#sync').onclick=()=>{if(confirm('Wallet '+VER+'\n\nSync now?\n\nCancel = change token'))sync();else setup()};
 
 /* ---------- start ---------- */
-const VER='v13';
+const VER='v14';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
