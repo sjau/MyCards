@@ -60,4 +60,4 @@ browser. Note: renaming or moving a folder makes the browser treat it as a fresh
 art/*.png are the logos used on the cards. To add one for another store:
 1. put art/<id>.png in the folder
 2. add an entry to ART in stores.js (c = card colour, w = logo width 0-1)
-3. put the id as 5th part of the store line, e.g. "IKEA|ikea.com|CDA||ikea".
+3. put the id as 5th part of the store line, e.g. "IKEA|ikea.com|CDA||ikea". The optional 6th and 7th parts set the barcode type used for manual entry (e.g. EAN13) and the category (loyalty, member, id, docs, other — default loyalty, e.g. "….|tcs" becomes "…|tcs||member" for a membership).

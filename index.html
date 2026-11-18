@@ -98,7 +98,8 @@ h3.sh{font-size:22px;font-weight:600;margin:22px 4px 6px}.sn{font-size:20px}
 <div class="ov" id="zoom"></div><div class="ov" id="crop"></div><div class="modal" id="modal"></div><div class="modal" id="ask" style="z-index:14"></div><div class="modal" id="src" style="z-index:14"></div>
 <script src="stores.js"></script><script src="jsbarcode.min.js"></script><script src="qrcode.js"></script>
 <script>
-const CATS=[['loyalty','Cards'],['id','IDs'],['docs','Papers'],['other','Other']];
+const CATS=[['loyalty','Cards'],['id','IDs'],['docs','Papers'],['member','Memberships'],['other','Other']];
+const CARD=c=>c.cat==='loyalty'||c.cat==='member'; // cards render with the big logo + code; the rest as documents
 const COLORS=['#1f3a34','#b3261e','#1d4ed8','#6d28d9','#b45309','#0f766e','#374151','#be185d'];
 const FMTS=[['QR','QR code'],['CODE128','Code 128'],['EAN13','EAN-13'],['EAN8','EAN-8'],['UPC','UPC-A'],['CODE39','Code 39'],['ITF','ITF'],['none','Number only']];
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -124,7 +125,7 @@ let _dn;try{_dn=new Intl.DisplayNames(['en'],{type:'region'})}catch{}
 const countryName=cc=>{try{return _dn.of(cc)}catch{return cc}};
 const COUNTRIES=(()=>{const pre=['CH','DE','AT','LI'];const all='AD AE AF AG AL AM AO AR AT AU AZ BA BB BD BE BF BG BH BI BJ BN BO BR BS BT BW BY BZ CA CD CF CG CH CI CL CM CN CO CR CU CV CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET EU FI FJ FM FR GA GB GD GE GH GM GN GQ GR GT GW GY HN HR HT HU ID IE IL IN IQ IR IS IT JM JO JP KE KG KH KI KM KN KP KR KW KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MG MH MK ML MM MN MR MT MU MV MW MX MY MZ NA NE NG NI NL NO NP NR NZ OM PA PE PG PH PK PL PT PW PY QA RO RS RU RW SA SB SC SD SE SG SI SK SL SM SN SO SR SS ST SV SY SZ TD TG TH TJ TL TM TN TO TR TT TV TZ UA UG US UY UZ VA VC VE VN VU WS XK YE ZA ZM ZW'.split(' ');
   const l=all.map(k=>[k,countryName(k)]).filter(x=>x[1]!==x[0]||x[0]==='EU');const r=l.filter(x=>!pre.includes(x[0])).sort((a,b)=>a[1].localeCompare(b[1]));return [...pre.map(k=>l.find(x=>x[0]===k)).filter(Boolean),...r]})();
-const iconHTML=(c,src)=>c.icon?`<img src="${src||iu(c.icon)}">`:(c.cat!=='loyalty'&&c.country&&!c.emoji)?`<span class="fl">${flag(c.country)}</span><span class="tg">${esc(c.dtype||'')}</span>`:(c.emoji||(c.cat!=='loyalty'&&DEF[c.cat]))?`<span class="em">${c.emoji||DEF[c.cat]}</span>`:`<span class="mono">${esc(initials(c.name||'?'))}</span>`;
+const iconHTML=(c,src)=>c.icon?`<img src="${src||iu(c.icon)}">`:(!CARD(c)&&c.country&&!c.emoji)?`<span class="fl">${flag(c.country)}</span><span class="tg">${esc(c.dtype||'')}</span>`:(c.emoji||(!CARD(c)&&DEF[c.cat]))?`<span class="em">${c.emoji||DEF[c.cat]}</span>`:`<span class="mono">${esc(initials(c.name||'?'))}</span>`;
 const thumb=c=>{const l=cur_(c);return (l.find(i=>i.side==='front')||l[0]||(c.imgs||[])[0])?.n};
 const srt=a=>[...a].sort((x,y)=>'front,back,other'.indexOf(x.side)-'front,back,other'.indexOf(y.side));
 const capText=m=>SIDES.find(x=>x[0]===m.side)[1]+(m.label?' – '+m.label:'')+(m.old?' (old)':'');
@@ -157,13 +158,13 @@ function render(){
   const q=$('#q').value.trim().toLowerCase();
   const list=Object.values(cards).filter(c=>!c.del&&(q?full(c).toLowerCase().includes(q):c.cat===tab))
     .sort((a,b)=>full(a).localeCompare(full(b)));
-  $('#grid').innerHTML=list.map(c=>c.cat==='loyalty'?loyTile(c):`<button class="t" data-id="${c.id}" style="background:${c.color}"><div class="ic ${c.icon?'im':''}">${iconHTML(c)}</div><span class="nm">${esc(c.name)}${c.label?`<small style="display:block;font-weight:400;opacity:.85">${esc(c.label)}</small>`:''}</span></button>`).join('')
+  $('#grid').innerHTML=list.map(c=>CARD(c)?loyTile(c):`<button class="t" data-id="${c.id}" style="background:${c.color}"><div class="ic ${c.icon?'im':''}">${iconHTML(c)}</div><span class="nm">${esc(c.name)}${c.label?`<small style="display:block;font-weight:400;opacity:.85">${esc(c.label)}</small>`:''}</span></button>`).join('')
     ||`<div class="empty">${q?'No match.':'Nothing here yet. Tap + to add one.'}</div>`;
 }
 $('#tabs').onclick=e=>{const k=e.target.dataset.k;if(k){tab=k;$('#q').value='';render()}};
 $('#q').oninput=render;
 $('#grid').onclick=e=>{const t=e.target.closest('.t');if(t)openCard(t.dataset.id)};
-$('#addb').onclick=()=>tab==='loyalty'?openStoreList():openEdit();
+$('#addb').onclick=()=>(tab==='loyalty'||tab==='member')?openStoreList():openEdit();
 
 /* ---------- overlays + Android back button ---------- */
 let stack=[];
@@ -205,7 +206,7 @@ function drawCode(host,c){
 let wl=null;
 const ICN={n:'<svg viewBox="0 0 24 24"><path d="M5 4h10l4 4v12H5z"/><path d="M8 12h8M8 16h6"/></svg>',c:'<svg viewBox="0 0 24 24"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',s:'<svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 11l7.6-4M8.2 13l7.6 4"/></svg>'};
 function fillView(c){
-  const v=$('#view'),loy=c.cat==='loyalty',id=c.id,wr=role!=='read';
+  const v=$('#view'),loy=CARD(c),id=c.id,wr=role!=='read';
   const olds=srt((c.imgs||[]).filter(i=>i.old));
   const photos=`${srt(cur_(c)).map(imgTag).join('')}${olds.length?`<details><summary style="color:var(--mute);margin:10px 0">Older versions (${olds.length})</summary>${olds.map(imgTag).join('')}</details>`:''}`;
   const notes=c.notes?`<div class="notes">${esc(c.notes)}</div>`:'';
@@ -263,11 +264,12 @@ async function addFlow(store){
 }
 function openAdd(x,r){
   const a=$('#add'),blobs={};let isrc='';
-  const s={id:rid(),cat:'loyalty',name:x?x.n:'',dom:x?x.d:'',art:x?x.art:'',store:!!x,code:r.code||'',fmt:(r.manual&&x&&x.fmt)?x.fmt:(r.fmt||'CODE128'),label:'',notes:'',imgs:[],color:x?stCol(x):COLORS[0]};
+  const s={id:rid(),cat:x?x.cat:tab,name:x?x.n:'',dom:x?x.d:'',art:x?x.art:'',store:!!x,code:r.code||'',fmt:(r.manual&&x&&x.fmt)?x.fmt:(r.fmt||'CODE128'),label:'',notes:'',imgs:[],color:x?stCol(x):COLORS[0]};
   if(x&&x.col)s.lock=true;
   a.innerHTML=`<div class="bar"><button class="ib" id="ab">←</button><h2>${esc(x?x.n:'Custom card')}</h2></div><div class="pane">
     <div id="ah"></div>
     ${x?'':`<label>Name</label><input class="in" id="an" placeholder="Card name">`}
+    <label>Type</label><select class="in" id="at">${CATS.map(([k,n])=>`<option value="${k}" ${k===s.cat?'selected':''}>${n}</option>`).join('')}</select>
     <label>Card number</label><input class="in" id="ac" value="${esc(s.code)}" autocomplete="off">
     <label>Barcode type</label><select class="in" id="af">${FMTS.map(([k,n])=>`<option value="${k}" ${k===s.fmt?'selected':''}>${n}</option>`).join('')}</select>
     ${ecHTML(s)}
@@ -281,12 +283,13 @@ function openAdd(x,r){
   a.querySelector('#ec').onchange=ev=>{s.ec=ev.target.value;prev()};
   a.querySelector('#al').oninput=ev=>{s.label=ev.target.value.trim();prev()};
   const an=a.querySelector('#an');if(an)an.oninput=ev=>{s.name=ev.target.value.trim();prev()};
+  a.querySelector('#at').onchange=ev=>{s.cat=ev.target.value};
   a.querySelectorAll('.sw i').forEach(i=>i.onclick=()=>{s.color=i.dataset.k;a.querySelectorAll('.sw i').forEach(j=>j.classList.toggle('on',j===i));prev()});
   a.querySelector('#as').onclick=async()=>{
     if(!s.code){alert('Please scan or enter the card number.');return}
     if(!s.name){alert('Please enter a name.');return}
     if(s.icon&&blobs[s.icon]){try{await api('up',{method:'POST',body:blobs[s.icon]},`&n=${s.icon}`)}catch{s.icon=''}}
-    s.u=Date.now();cards[s.id]=s;save();tab='loyalty';closeAll(1);render();toast('Card added');push(s).catch(()=>{})};
+    s.u=Date.now();cards[s.id]=s;save();tab=s.cat;closeAll(1);render();toast('Card added');push(s).catch(()=>{})};
   // no artwork for this store: fetch its website icon in the background
   if(!s.art&&s.dom&&role==='write')api('logo',{},'&d='+encodeURIComponent(s.dom)).then(r=>r.blob()).then(async bl=>{
     if(bl.size<100)throw 0;const n=s.id+'_i'+rid();blobs[n]=bl;s.icon=n;isrc=URL.createObjectURL(bl);const col=await brandColor(bl);if(col&&!s.lock)s.color=col;prev()}).catch(()=>{});
@@ -329,10 +332,10 @@ function openEdit(id,pre,showPhotos){
     const slot=k=>{const m=s.imgs.find(x=>x.side===k&&!x.old);return m?tile(m):`<div class="empty" data-k="${k}"><span>+<br>${T(k)}</span></div>`};
     const others=s.imgs.filter(x=>x.side==='other'&&!x.old),olds=s.imgs.filter(x=>x.old);
     e.innerHTML=`<div class="bar"><button class="ib" id="b2">←</button><h2>${old?'Edit':'New card'}</h2><button class="btn pri" id="sv">Save</button></div><div class="pane">
-    ${s.store&&s.cat==='loyalty'?`<div style="font-size:22px;font-weight:600;margin:8px 0 0">${esc(s.name)}</div>`:`<label>Name</label><input class="in" id="n" value="${esc(s.name)}" placeholder="e.g. Rewe, Passport, Car papers">`}
-    ${s.cat==='loyalty'?`<label>Label (optional, e.g. whose card it is)</label><input class="in" id="lb2" value="${esc(s.label||'')}" placeholder="e.g. Anna">`:''}
-    ${s.store&&s.cat==='loyalty'?`<input type="hidden" id="c" value="loyalty">`:`<label>Type</label>`}<select class="in" id="c" ${s.store&&s.cat==='loyalty'?'hidden disabled':''}>${CATS.map(([k,n])=>`<option value="${k}" ${k===s.cat?'selected':''}>${n}</option>`).join('')}</select>
-    ${s.cat!=='loyalty'?`<label>Document (used to draw the preview with the national flag)</label><div class="row"><select class="in" id="dt">${DTS.map(([k,n])=>`<option value="${k}" ${k===(s.dtype||'')?'selected':''}>${n}</option>`).join('')}</select><select class="in" id="co"><option value="">Country…</option>${COUNTRIES.map(([k,n])=>`<option value="${k}" ${k===s.country?'selected':''}>${esc(n)}</option>`).join('')}</select></div>`:''}
+    ${s.store&&CARD(s)?`<div style="font-size:22px;font-weight:600;margin:8px 0 0">${esc(s.name)}</div>`:`<label>Name</label><input class="in" id="n" value="${esc(s.name)}" placeholder="e.g. Rewe, Passport, Car papers">`}
+    ${CARD(s)?`<label>Label (optional, e.g. whose card it is)</label><input class="in" id="lb2" value="${esc(s.label||'')}" placeholder="e.g. Anna">`:''}
+    <label>Type</label><select class="in" id="c">${CATS.map(([k,n])=>`<option value="${k}" ${k===s.cat?'selected':''}>${n}</option>`).join('')}</select>
+    ${!CARD(s)?`<label>Document (used to draw the preview with the national flag)</label><div class="row"><select class="in" id="dt">${DTS.map(([k,n])=>`<option value="${k}" ${k===(s.dtype||'')?'selected':''}>${n}</option>`).join('')}</select><select class="in" id="co"><option value="">Country…</option>${COUNTRIES.map(([k,n])=>`<option value="${k}" ${k===s.country?'selected':''}>${esc(n)}</option>`).join('')}</select></div>`:''}
     <label>Barcode / number (optional)</label><div class="row"><input class="in" id="cd" value="${esc(s.code)}"><button class="btn" id="sc">Scan</button></div>
     <label>Barcode format</label><select class="in" id="f">${FMTS.map(([k,n])=>`<option value="${k}" ${k===s.fmt?'selected':''}>${n}</option>`).join('')}</select>
     ${ecHTML(s)}
@@ -342,14 +345,14 @@ function openEdit(id,pre,showPhotos){
     <div class="row" style="align-items:center"><div class="icbox" style="background:${s.color}"><div class="ic ${s.icon?'im':''}">${iconHTML(s,s.icon&&pu({n:s.icon}))}</div></div><div class="emo" style="flex:1">${EMOJIS.map(x=>`<span data-e="${x}">${x}</span>`).join('')}</div></div>
     <div class="row" style="margin-top:8px"><input class="in" id="dm" value="${esc(s.dom||'')}" placeholder="Website, e.g. ikea.com"><button class="btn" id="lg">Get logo</button></div>
     <div class="row" style="margin-top:8px"><button class="btn" id="ii">Own icon image</button><button class="btn" id="ix">Letters / default</button></div>`}
-    ${s.cat==='loyalty'?`<details ${s.imgs.length?'open':''} style="margin-top:14px"><summary style="color:var(--mute)">Card photos (optional, usually not needed)</summary>`:''}
+    ${CARD(s)?`<details ${s.imgs.length?'open':''} style="margin-top:14px"><summary style="color:var(--mute)">Card photos (optional, usually not needed)</summary>`:''}
     <label>Front and back</label>
     <div class="th">${slot('front')}${slot('back')}</div>
     <label>Other photos</label>
     <div class="th">${others.map(tile).join('')}<div class="empty" data-k="other"><span>+<br>Add</span></div></div>
     ${olds.length?`<label>Older versions</label><div class="th">${olds.map(tile).join('')}</div>`:''}
     <div class="hint">A new front or back photo replaces the current one. The replaced one is kept under Older versions.</div>
-    ${s.cat==='loyalty'?'</details>':''}
+    ${CARD(s)?'</details>':''}
     <input type="file" accept="image/*" id="fi" hidden><input type="file" accept="image/*" capture="environment" id="fc" hidden>
     <label>Notes</label><textarea class="in" id="nt" rows="3">${esc(s.notes)}</textarea>
     ${old?'<div style="margin-top:24px"><button class="btn bad" id="dl">Delete</button></div>':''}</div>`;
@@ -531,7 +534,7 @@ function setup(msg){
 $('#sync').onclick=()=>{if(confirm('Wallet '+VER+'\n\nSync now?\n\nCancel = change token'))sync();else setup()};
 
 /* ---------- start ---------- */
-const VER='v14';
+const VER='v15';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
