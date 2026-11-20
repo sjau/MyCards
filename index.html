@@ -98,7 +98,7 @@ h3.sh{font-size:22px;font-weight:600;margin:22px 4px 6px}.sn{font-size:20px}
 <div class="ov" id="zoom"></div><div class="ov" id="crop"></div><div class="modal" id="modal"></div><div class="modal" id="ask" style="z-index:14"></div><div class="modal" id="src" style="z-index:14"></div>
 <script src="stores.js"></script><script src="jsbarcode.min.js"></script><script src="qrcode.js"></script>
 <script>
-const CATS=[['loyalty','Cards'],['id','IDs'],['docs','Papers'],['member','Memberships'],['other','Other']];
+const CATS=[['loyalty','Cards'],['id','IDs'],['docs','Documents'],['member','Memberships'],['other','Other']];
 const CARD=c=>c.cat==='loyalty'||c.cat==='member'; // cards render with the big logo + code; the rest as documents
 const COLORS=['#1f3a34','#b3261e','#1d4ed8','#6d28d9','#b45309','#0f766e','#374151','#be185d'];
 const FMTS=[['QR','QR code'],['CODE128','Code 128'],['EAN13','EAN-13'],['EAN8','EAN-8'],['UPC','UPC-A'],['CODE39','Code 39'],['ITF','ITF'],['none','Number only']];
@@ -448,7 +448,7 @@ function photoMenu(s,i,blobs,after,pick){
 }
 
 /* ---------- photo cropper: shapes, zoom, pan, rotate ---------- */
-const SHAPES=[['Card',1.586],['Passport',1.42],['A4 / A5',1.414],['Square',1],['Free',0]];
+const SHAPES=[['ID-1 card',1.5858],['ID-3 passport',1.4205],['DIN A4–A6',1.4142],['Square',1],['Free',0]];
 function cropper(src,shapeOv,maxPx){return new Promise(res=>{
   const o=$('#crop'),img=new Image();let done=false;
   const fin=r=>{if(done)return;done=true;res(r);history.back()};
@@ -470,7 +470,7 @@ function cropper(src,shapeOv,maxPx){return new Promise(res=>{
     const rrect=(x,y,w,h,r)=>g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h);
     const draw=()=>{const d=devicePixelRatio||1;g.setTransform(d,0,0,d,0,0);g.fillStyle='#000';g.fillRect(0,0,W,H);
       g.save();g.translate(cx+tx,cy+ty);g.rotate((ang+fine)*Math.PI/180);g.scale(sc,sc);g.drawImage(img,-iw/2,-ih/2);g.restore();
-      const rad=SHAPES[shape][1]===1.586?fw*.045:4;
+      const rad=SHAPES[shape][1]===1.5858?fw*.045:4;
       g.fillStyle='rgba(0,0,0,.62)';g.beginPath();g.rect(0,0,W,H);rrect(cx-fw/2,cy-fh/2,fw,fh,rad);g.fill('evenodd');
       g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();rrect(cx-fw/2,cy-fh/2,fw,fh,rad);g.stroke()};
     const ui=()=>{o.querySelectorAll('.sh').forEach(b=>b.classList.toggle('on',+b.dataset.i===shape));
@@ -538,7 +538,7 @@ function setup(msg){
 $('#sync').onclick=()=>{if(confirm('MyCards '+VER+'\n\nSync now?\n\nCancel = change token'))sync();else setup()};
 
 /* ---------- start ---------- */
-const VER='v18';
+const VER='v19';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
