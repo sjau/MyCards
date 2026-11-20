@@ -98,7 +98,7 @@ h3.sh{font-size:22px;font-weight:600;margin:22px 4px 6px}.sn{font-size:20px}
 <div class="ov" id="zoom"></div><div class="ov" id="crop"></div><div class="modal" id="modal"></div><div class="modal" id="ask" style="z-index:14"></div><div class="modal" id="src" style="z-index:14"></div>
 <script src="stores.js"></script><script src="jsbarcode.min.js"></script><script src="qrcode.js"></script>
 <script>
-const CATS=[['loyalty','Cards'],['member','Club'],['id','IDs'],['docs','Docs'],['other','Other']];
+const CATS=[['loyalty','Cards'],['member','Clubs'],['id','IDs'],['docs','Docs'],['other','Other']];
 const CARD=c=>c.cat==='loyalty'||c.cat==='member'; // cards render with the big logo + code; the rest as documents
 const COLORS=['#1f3a34','#b3261e','#1d4ed8','#6d28d9','#b45309','#0f766e','#374151','#be185d'];
 const FMTS=[['QR','QR code'],['CODE128','Code 128'],['EAN13','EAN-13'],['EAN8','EAN-8'],['UPC','UPC-A'],['CODE39','Code 39'],['ITF','ITF'],['none','Number only']];
@@ -550,7 +550,7 @@ function openSettings(){const md=$('#ask');
 $('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v22';
+const VER='v23';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
