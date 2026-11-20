@@ -483,7 +483,7 @@ function cropper(src,shapeOv,maxPx){return new Promise(res=>{
       };
     const relayout=()=>{layout();fit();ui();draw()};
     o.querySelectorAll('.sh').forEach(b=>b.onclick=()=>{shape=+b.dataset.i;W_(shape);portrait=false;relayout()});
-    const W_=v=>W('shape',v);
+    const W_=v=>localStorage.setItem(NS+'shape',JSON.stringify(v)); // NB: the cropper's local W (canvas width) shadows the global storage helper W — don't call W() here
     o.querySelector('#or').onclick=()=>{portrait=!portrait;relayout()};
             o.querySelector('#rl').onclick=()=>{ang=Math.round(ang/90)*90-90;fine=0;o.querySelector('#fn').value=0;relayout()};
     o.querySelector('#rr').onclick=()=>{ang=Math.round(ang/90)*90+90;fine=0;o.querySelector('#fn').value=0;relayout()};
@@ -598,7 +598,7 @@ function openSettings(){const md=$('#ask');
 $('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v29';
+const VER='v30';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
