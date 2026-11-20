@@ -86,7 +86,7 @@ h3.sh{font-size:22px;font-weight:600;margin:22px 4px 6px}.sn{font-size:20px}
 #zoom{background:#000;z-index:8;display:none;overflow:auto}#zoom img{width:100%;display:block}#zoom.z img{width:260%}
 </style></head><body>
 <div id="app">
- <div class="top"><button class="ib" id="sync" title="Settings">⚙</button><h1 id="ttl">Cards</h1><button id="addb" aria-label="Add card">+</button></div>
+ <div class="top"><button class="ib" id="sync" title="Settings"><svg viewBox="0 0 24 24" style="width:24px;height:24px;display:block;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><h1 id="ttl">Cards</h1><button id="addb" aria-label="Add card">+</button></div>
  <header><input id="q" type="search" placeholder="Search your cards"></header>
  <nav id="tabs"></nav>
  <div id="grid"></div>
@@ -598,7 +598,7 @@ function openSettings(){const md=$('#ask');
 $('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v28';
+const VER='v29';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
