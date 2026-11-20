@@ -535,10 +535,21 @@ function setup(msg){
   const t=prompt((msg||'')+'Enter your access key (from api.php).',token);
   if(t!==null){token=t.trim();W('token',token);role='';W('role','');sync()}
 }
-$('#sync').onclick=()=>{if(confirm('MyCards '+VER+'\n\nSync now?\n\nCancel = change token'))sync();else setup()};
+async function signOut(){ // local reset — works with any key, valid or not, and offline
+  if(!confirm('Sign out?\n\nThe access key and this device\'s local copy of the cards (including cached photos) are removed. Synced cards come back after entering the key again.'))return;
+  cards={};usage={};token='';role='';save();W('usage',{});W('token','');W('role','');
+  try{const c=await caches.open('wallet-'+VER+NS);for(const r of await c.keys())if(r.url.includes('a=img'))await c.delete(r)}catch{}
+  location.reload()}
+function openSettings(){const md=$('#ask');
+  md.innerHTML=`<div><div style="font-weight:600;margin-bottom:10px">MyCards ${VER}</div><button class="btn" id="st1" style="width:100%;margin-top:6px">Sync now</button><button class="btn" id="st2" style="width:100%;margin-top:6px">Change access key</button><button class="btn bad" id="st3" style="width:100%;margin-top:6px">Sign out</button></div>`;
+  md.querySelector('#st1').onclick=()=>{back();sync()};
+  md.querySelector('#st2').onclick=()=>{back();setup()};
+  md.querySelector('#st3').onclick=()=>{back();signOut()};
+  md.onclose=null;show(md)}
+$('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v19';
+const VER='v20';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
