@@ -109,7 +109,7 @@ const L=(k,d)=>{try{return JSON.parse(localStorage.getItem(NS+k))??d}catch{retur
 const lg=localStorage.getItem(NS+'token')===null&&localStorage.getItem('token');
 if(lg){let t;try{t=JSON.parse(lg)}catch{t=lg}
   fetch('api.php?a=me',{headers:{'X-Token':t}}).then(r=>{if(!r.ok)return;for(const k of ['cards','usage','token','role','tab','shape'])if(localStorage.getItem(NS+k)===null&&localStorage.getItem(k)!==null){localStorage.setItem(NS+k,localStorage.getItem(k));localStorage.removeItem(k)}location.reload()}).catch(()=>{})}
-let cards=L('cards',{}), usage=L('usage',{}), token=L('token',''), role=L('role',''), tab=L('tab','loyalty'); tab='loyalty'; // always open on cards
+let cards=L('cards',{}), usage=L('usage',{}), token=L('token',''), role=L('role',''), tab=L('tab','loyalty'), sort=L('sort',''); tab='loyalty'; // always open on cards
 const iu=n=>`api.php?a=img&n=${n}&t=${encodeURIComponent(token)}`;
 const save=()=>W('cards',cards);
 const SIDES=[['front','Front'],['back','Back'],['other','Other']];
@@ -157,7 +157,7 @@ function render(){
   $('#tabs').innerHTML=CATS.map(([k,n])=>`<button data-k="${k}" class="${k===tab?'on':''}">${n}</button>`).join('');
   const q=$('#q').value.trim().toLowerCase();
   const list=Object.values(cards).filter(c=>!c.del&&(q?full(c).toLowerCase().includes(q):c.cat===tab))
-    .sort((a,b)=>full(a).localeCompare(full(b)));
+    .sort((a,b)=>(b.pin?1:0)-(a.pin?1:0)||(sort==='use'?(usage[b.id]||0)-(usage[a.id]||0):0)||full(a).localeCompare(full(b)));
   $('#grid').innerHTML=list.map(c=>CARD(c)?loyTile(c):`<button class="t" data-id="${c.id}" style="background:${c.color}"><div class="ic ${c.icon?'im':''}">${iconHTML(c)}</div><span class="nm">${esc(c.name)}${c.label?`<small style="display:block;font-weight:400;opacity:.85">${esc(c.label)}</small>`:''}</span></button>`).join('')
     ||`<div class="empty">${q?'No match.':'Nothing here yet. Tap + to add one.'}</div>`;
 }
@@ -213,11 +213,12 @@ function fillView(c){
   const codeBox=c.code?`<div class="code"><div id="bc"></div><div class="num">${esc(c.code)}</div></div>`:'';
   const acts=`<div class="acts">${wr?`<button data-a="n">${ICN.n}Notes</button><button data-a="p">${ICN.c}Card Pictures</button><button data-a="m">${ICN.m}Move</button>`:''}<button data-a="s">${ICN.s}Share Card</button></div>`;
   const banner=c.country&&!loy?`<div class="lc" style="background:linear-gradient(135deg,${c.color},${shade(c.color)});text-align:center"><div style="font-size:72px;line-height:1.15">${flag(c.country)}</div><div class="tg" style="font-size:15px">${esc((c.dtype&&DTS.find(x=>x[0]===c.dtype)[1]||'')+' · '+countryName(c.country))}</div></div>`:'';
-  v.innerHTML=`<div class="bar"><button class="ib" id="b1">←</button><h2>${esc(loy?c.name:full(c))}</h2>${wr?'<button class="tl" id="ed">Edit</button>':''}</div><div class="pane">`+
+  v.innerHTML=`<div class="bar"><button class="ib" id="b1">←</button><h2>${esc(loy?c.name:full(c))}</h2>${wr?`<button class="ib" id="pn"><svg viewBox="0 0 24 24" style="width:22px;height:22px;display:block;stroke:currentColor;fill:${c.pin?'currentColor':'none'};stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M9 4h6l-1 5 4 4v2H6v-2l4-4z"/><path d="M12 15v6"/></svg></button><button class="tl" id="ed">Edit</button>`:''}</div><div class="pane">`+
     (loy?`<div class="lc2">${headHTML(c)}${codeBox}</div>${acts}${notes}${photos}`
         :`${banner}${codeBox?`<div class="lc2" style="margin-bottom:12px">${codeBox}</div>`:''}${photos}${notes}`)+`</div>`;
   if(c.code)drawCode(v.querySelector('#bc'),c);
   v.querySelector('#b1').onclick=back;
+  const pn=v.querySelector('#pn');if(pn)pn.onclick=()=>{c.pin=!c.pin;c.u=Date.now();save();push(c).catch(()=>{});pn.querySelector('svg').style.fill=c.pin?'currentColor':'none';toast(c.pin?'Pinned':'Unpinned')};
   const ed=v.querySelector('#ed');if(ed)ed.onclick=()=>openEdit(id);
   v.querySelectorAll('.acts [data-a]').forEach(b=>b.onclick=()=>{const a=b.dataset.a;if(a==='n')openNotes(c);if(a==='p')openEdit(id,undefined,true);if(a==='m')openMove(c);if(a==='s')shareCard(c)});
   v.querySelectorAll('img.p').forEach(i=>i.onclick=()=>{const z=$('#zoom');z.className='ov';z.innerHTML=`<img src="${i.src}">`;z.onclick=back;show(z);z.style.display='block'});
@@ -542,7 +543,10 @@ async function signOut(){ // local reset — works with any key, valid or not, a
   try{const c=await caches.open('wallet-'+VER+NS);for(const r of await c.keys())if(r.url.includes('a=img'))await c.delete(r)}catch{}
   location.reload()}
 function openSettings(){const md=$('#ask');
-  md.innerHTML=`<div><div style="font-weight:600;margin-bottom:10px">MyCards ${VER}</div><button class="btn" id="st1" style="width:100%;margin-top:6px">Sync now</button><button class="btn" id="st2" style="width:100%;margin-top:6px">Change access key</button><button class="btn bad" id="st3" style="width:100%;margin-top:6px">Sign out</button></div>`;
+  md.innerHTML=`<div><div style="font-weight:600;margin-bottom:8px">MyCards ${VER}</div><div style="color:var(--mute);font-size:13px">Sort cards</div><div class="seg"><button class="btn ${sort?'':'on'}" id="so1">A–Z</button><button class="btn ${sort?'on':''}" id="so2">By usage</button></div><button class="btn" id="st1" style="width:100%;margin-top:10px">Sync now</button><button class="btn" id="st2" style="width:100%;margin-top:6px">Change access key</button><button class="btn bad" id="st3" style="width:100%;margin-top:6px">Sign out</button></div>`;
+  const setS=v=>{sort=v;W('sort',sort);md.querySelector('#so1').classList.toggle('on',!sort);md.querySelector('#so2').classList.toggle('on',!!sort);render()};
+  md.querySelector('#so1').onclick=()=>setS('');
+  md.querySelector('#so2').onclick=()=>setS('use');
   md.querySelector('#st1').onclick=()=>{back();sync()};
   md.querySelector('#st2').onclick=()=>{back();setup()};
   md.querySelector('#st3').onclick=()=>{back();signOut()};
@@ -550,7 +554,7 @@ function openSettings(){const md=$('#ask');
 $('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v23';
+const VER='v24';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
