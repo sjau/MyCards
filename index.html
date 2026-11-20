@@ -16,8 +16,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 header{display:flex;gap:8px;padding:10px 12px 6px;align-items:center}
 #q,.search{flex:1;width:100%;border:0;background:var(--surf);border-radius:30px;padding:14px 20px;font-size:17px;min-width:0}
 .ib{border:0;background:none;color:var(--acc);font-size:24px;padding:6px 10px;border-radius:10px;cursor:pointer}
-nav{display:flex;gap:6px;padding:4px 12px 8px;overflow-x:auto}
-nav button{border:1px solid var(--line);background:var(--surf);border-radius:20px;padding:7px 16px;white-space:nowrap;cursor:pointer}
+nav{display:flex;gap:4px;padding:4px 12px 8px;overflow-x:auto}
+nav button{border:1px solid var(--line);background:var(--surf);border-radius:20px;padding:7px 10px;white-space:nowrap;cursor:pointer}
 nav button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 #grid{flex:1;overflow:auto;padding:4px 12px 100px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;align-content:start;grid-auto-rows:max-content}
 @media(min-width:700px){#grid{grid-template-columns:repeat(4,1fr)}}
@@ -98,7 +98,7 @@ h3.sh{font-size:22px;font-weight:600;margin:22px 4px 6px}.sn{font-size:20px}
 <div class="ov" id="zoom"></div><div class="ov" id="crop"></div><div class="modal" id="modal"></div><div class="modal" id="ask" style="z-index:14"></div><div class="modal" id="src" style="z-index:14"></div>
 <script src="stores.js"></script><script src="jsbarcode.min.js"></script><script src="qrcode.js"></script>
 <script>
-const CATS=[['loyalty','Cards'],['id','IDs'],['docs','Documents'],['member','Memberships'],['other','Other']];
+const CATS=[['loyalty','Cards'],['member','Club'],['id','IDs'],['docs','Docs'],['other','Other']];
 const CARD=c=>c.cat==='loyalty'||c.cat==='member'; // cards render with the big logo + code; the rest as documents
 const COLORS=['#1f3a34','#b3261e','#1d4ed8','#6d28d9','#b45309','#0f766e','#374151','#be185d'];
 const FMTS=[['QR','QR code'],['CODE128','Code 128'],['EAN13','EAN-13'],['EAN8','EAN-8'],['UPC','UPC-A'],['CODE39','Code 39'],['ITF','ITF'],['none','Number only']];
@@ -550,7 +550,7 @@ function openSettings(){const md=$('#ask');
 $('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v21';
+const VER='v22';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
