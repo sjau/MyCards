@@ -125,7 +125,7 @@ let _dn;try{_dn=new Intl.DisplayNames(['en'],{type:'region'})}catch{}
 const countryName=cc=>{try{return _dn.of(cc)}catch{return cc}};
 const COUNTRIES=(()=>{const pre=['CH','DE','AT','LI'];const all='AD AE AF AG AL AM AO AR AT AU AZ BA BB BD BE BF BG BH BI BJ BN BO BR BS BT BW BY BZ CA CD CF CG CH CI CL CM CN CO CR CU CV CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET EU FI FJ FM FR GA GB GD GE GH GM GN GQ GR GT GW GY HN HR HT HU ID IE IL IN IQ IR IS IT JM JO JP KE KG KH KI KM KN KP KR KW KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MG MH MK ML MM MN MR MT MU MV MW MX MY MZ NA NE NG NI NL NO NP NR NZ OM PA PE PG PH PK PL PT PW PY QA RO RS RU RW SA SB SC SD SE SG SI SK SL SM SN SO SR SS ST SV SY SZ TD TG TH TJ TL TM TN TO TR TT TV TZ UA UG US UY UZ VA VC VE VN VU WS XK YE ZA ZM ZW'.split(' ');
   const l=all.map(k=>[k,countryName(k)]).filter(x=>x[1]!==x[0]||x[0]==='EU');const r=l.filter(x=>!pre.includes(x[0])).sort((a,b)=>a[1].localeCompare(b[1]));return [...pre.map(k=>l.find(x=>x[0]===k)).filter(Boolean),...r]})();
-const iconHTML=(c,src)=>c.icon?`<img src="${src||iu(c.icon)}">`:(!CARD(c)&&c.country&&!c.emoji)?`<span class="fl">${flag(c.country)}</span><span class="tg">${esc(c.dtype||'')}</span>`:(c.emoji||(!CARD(c)&&DEF[c.cat]))?`<span class="em">${c.emoji||DEF[c.cat]}</span>`:`<span class="mono">${esc(initials(c.name||'?'))}</span>`;
+const iconHTML=(c,src)=>c.icon?`<img src="${src||iu(c.icon)}">`:(!CARD(c)&&c.country&&!c.emoji)?`<span class="fl">${flag(c.country)}</span><span class="tg">${esc(((DTS.find(x=>x[0]===c.dtype)||[])[1]||c.dtype||'').split(' ')[0])}</span>`:(c.emoji||(!CARD(c)&&DEF[c.cat]))?`<span class="em">${c.emoji||DEF[c.cat]}</span>`:`<span class="mono">${esc(initials(c.name||'?'))}</span>`;
 const thumb=c=>{const l=cur_(c);return (l.find(i=>i.side==='front')||l[0]||(c.imgs||[])[0])?.n};
 const srt=a=>[...a].sort((x,y)=>'front,back,other'.indexOf(x.side)-'front,back,other'.indexOf(y.side));
 const capText=m=>SIDES.find(x=>x[0]===m.side)[1]+(m.label?' – '+m.label:'')+(m.old?' (old)':'');
@@ -554,7 +554,7 @@ function openSettings(){const md=$('#ask');
 $('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v26';
+const VER='v27';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
