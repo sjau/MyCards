@@ -96,7 +96,7 @@ h3.sh{font-size:22px;font-weight:600;margin:22px 4px 6px}.sn{font-size:20px}
 <div class="ov" id="edit"></div><div class="ov" id="pick"></div><div class="ov" id="add"></div>
 <div class="ov" id="scan"></div>
 <div class="ov" id="zoom"></div><div class="ov" id="crop"></div><div class="modal" id="modal"></div><div class="modal" id="ask" style="z-index:14"></div><div class="modal" id="src" style="z-index:14"></div>
-<script src="stores.js"></script><script src="jsbarcode.min.js"></script><script src="qrcode.js"></script>
+<script src="stores.js"></script><script src="jsbarcode.min.js"></script><script src="qrcode.js"></script><script src="ocr/tesseract.min.js"></script>
 <script>
 const CATS=[['loyalty','Cards'],['member','Clubs'],['id','IDs'],['docs','Docs'],['other','Other']];
 const CARD=c=>c.cat==='loyalty'||c.cat==='member'; // cards render with the big logo + code; the rest as documents
@@ -342,6 +342,7 @@ function openEdit(id,pre,showPhotos){
     <label>Type</label><select class="in" id="c">${CATS.map(([k,n])=>`<option value="${k}" ${k===s.cat?'selected':''}>${n}</option>`).join('')}</select>
     ${!CARD(s)?`<label>Document (used to draw the preview with the national flag)</label><div class="row"><select class="in" id="dt">${DTS.map(([k,n])=>`<option value="${k}" ${k===(s.dtype||'')?'selected':''}>${n}</option>`).join('')}</select><select class="in" id="co"><option value="">Country…</option>${COUNTRIES.map(([k,n])=>`<option value="${k}" ${k===s.country?'selected':''}>${esc(n)}</option>`).join('')}</select></div>`:''}
     <label>Barcode / number (optional)</label><div class="row"><input class="in" id="cd" value="${esc(s.code)}"><button class="btn" id="sc">Scan</button></div>
+    ${!CARD(s)?`<div style="margin-top:8px"><button class="btn" id="mz" style="width:100%">Read MRZ from photo</button></div>`:''}
     <label>Barcode format</label><select class="in" id="f">${FMTS.map(([k,n])=>`<option value="${k}" ${k===s.fmt?'selected':''}>${n}</option>`).join('')}</select>
     ${ecHTML(s)}
     ${s.art?'':`<label>Colour</label><div class="sw">${COLORS.map(k=>`<i data-k="${k}" style="background:${k}" class="${k===s.color?'on':''}"></i>`).join('')}</div>`}
@@ -376,6 +377,10 @@ function openEdit(id,pre,showPhotos){
     e.querySelectorAll('.th [data-k]').forEach(d=>d.onclick=()=>{grab();pick(d.dataset.k)});
     
     e.querySelector('#sc').onclick=async()=>{grab();const r=await scan();if(r&&r.code){s.code=r.code;s.fmt=r.fmt}draw()};
+    const mz=e.querySelector('#mz');if(mz)mz.onclick=()=>{grab();const fi=e.querySelector('#fi');fi.multiple=false;fi.value='';
+      fi.onchange=async()=>{const f=fi.files[0];if(!f)return;const r=await cropper(f,4);if(!r)return;
+        askMRZ(r.blob,res=>{s.code=res.number;if(!s.dtype)s.dtype=res.type==='TD3'?'PASSPORT':'ID';if(!s.country&&res.c2)s.country=res.c2;draw();toast('Read from MRZ')})};
+      fi.click()};
     if(old)e.querySelector('#dl').onclick=()=>{if(!confirm('Delete "'+old.name+'"?'))return;cards[s.id]={...old,del:true,u:Date.now()};save();closeAll(2);render();sync()};
     e.querySelector('#sv').onclick=async()=>{try{await (async()=>{grab();if(!s.name){alert('Please enter a name.');return}
       const b=e.querySelector('#sv');b.textContent='Saving…';b.disabled=true;
@@ -531,6 +536,45 @@ function scan(){return new Promise(async res=>{
   const loop=async()=>{if(done)return;try{const r=await det.detect(v);if(r.length)return hit(r[0])}catch{}setTimeout(loop,150)};loop();
 })}
 
+/* ---------- MRZ reader (passports / ID cards) ---------- */
+const MRZ2={CHE:'CH',DEU:'DE',AUT:'AT',LIE:'LI',FRA:'FR',ITA:'IT',GBR:'GB',IRL:'IE',NLD:'NL',BEL:'BE',LUX:'LU',ESP:'ES',PRT:'PT',GRC:'GR',TUR:'TR',POL:'PL',CZE:'CZ',SVK:'SK',HUN:'HU',ROU:'RO',BGR:'BG',HRV:'HR',SRB:'RS',SVN:'SI',BIH:'BA',MKD:'MK',ALB:'AL',EST:'EE',LVA:'LV',LTU:'LT',FIN:'FI',SWE:'SE',NOR:'NO',DNK:'DK',ISL:'IS',USA:'US',CAN:'CA',MEX:'MX',BRA:'BR',ARG:'AR',CHL:'CL',COL:'CO',PER:'PE',AUS:'AU',NZL:'NZ',JPN:'JP',KOR:'KR',CHN:'CN',IND:'IN',IDN:'ID',THA:'TH',SGP:'SG',MYS:'MY',PHL:'PH',VNM:'VN',UKR:'UA',RUS:'RU',BLR:'BY',KAZ:'KZ',ISR:'IL',SAU:'SA',ARE:'AE',QAT:'QA',KWT:'KW',EGY:'EG',MAR:'MA',TUN:'TN',DZA:'DZ',ZAF:'ZA',KEN:'KE',NGA:'NG',GHA:'GH'};
+const mrzV=c=>c==='<'?0:/[0-9]/.test(c)?+c:/[A-Z]/.test(c)?c.charCodeAt(0)-55:null;
+const mrzCk=s=>{let t=0,w=[7,3,1];for(let i=0;i<s.length;i++){const v=mrzV(s[i]);if(v===null)return null;t+=v*w[i%3]}return t%10};
+const mrzDate=(s,fut)=>{const ny=+new Date().getFullYear()%100;let y=+s.slice(0,2);y+=(fut?2000:(y>ny-2?1900:2000));return y+'-'+s.slice(2,4)+'-'+s.slice(4,6)};
+function mrzParse(txt){
+  const L=txt.toUpperCase().split(/\n+/).map(s=>s.replace(/[^A-Z0-9<]/g,'')).filter(s=>s.length>=26);
+  const out=[];
+  for(let i=0;i+1<L.length;i++){const a=L[i],b=L[i+1];
+    if(a.length>=42&&b.length>=42&&a[1]==='<'){
+      const n=b.slice(0,9),cn=mrzCk(n);
+      if(cn!==null&&n.replace(/</g,'').length>=5){const ok=cn===+b[9];
+        out.push({type:'TD3',score:(ok?3:0)+(mrzCk(b.slice(13,19))===+b[19]?1:0)+(mrzCk(b.slice(21,27))===+b[27]?1:0),number:n.replace(/</g,''),numOk:ok,dob:b.slice(13,19),exp:b.slice(21,27),c3:b.slice(10,13),nm:a.slice(5).split('<<').map(x=>x.replace(/</g,' ').trim()).filter(Boolean).join(' ')})}
+    }
+  }
+  for(let i=0;i+2<L.length;i++){const a=L[i],b=L[i+1],c=L[i+2];
+    if(a.length>=29&&b.length>=29&&c.length>=29&&/^[A-Z]{1,2}/.test(a)&&/^\d{6}/.test(b)){
+      const n=a.slice(5,14),cn=mrzCk(n);
+      if(cn!==null&&n.replace(/</g,'').length>=5){const ok=cn===+a[14];
+        out.push({type:'TD1',score:(ok?3:0)+(mrzCk(b.slice(0,6))===+b[6]?1:0)+(mrzCk(b.slice(8,14))===+b[14]?1:0),number:n.replace(/</g,''),numOk:ok,dob:b.slice(0,6),exp:b.slice(8,14),c3:b.slice(15,18),nm:c.split('<<').map(x=>x.replace(/</g,' ').trim()).filter(Boolean).join(' ')})}
+    }
+  }
+  if(!out.length)return null;
+  out.sort((x,y)=>y.score-x.score);
+  const r=out[0];r.c2=MRZ2[r.c3]||'';return r;
+}
+function askMRZ(blob,cb){const md=$('#ask');
+  md.innerHTML=`<div><div style="font-weight:600;margin-bottom:6px">Reading the MRZ…</div><div class="notes" style="margin:0">The first time this downloads the OCR engine (~6 MB) and can take a moment.</div></div>`;
+  md.onclose=null;show(md);
+  Tesseract.createWorker('eng',1,{workerPath:'ocr/worker.min.js',corePath:'ocr',langPath:'ocr'}).then(async w=>{
+    await w.setParameters({tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<',tessedit_pageseg_mode:'6'});
+    const r=await w.recognize(blob);await w.terminate();
+    const res=mrzParse(r.data.text||'');
+    if(!res){md.innerHTML=`<div><div style="font-weight:600;margin-bottom:8px">No MRZ found</div><div class="notes" style="margin:0 0 12px">Photograph just the two or three text lines at the bottom of the document — straight, well lit, filling the frame.</div><button class="btn" id="m0" style="width:100%">OK</button></div>`;md.querySelector('#m0').onclick=back;return}
+    md.innerHTML=`<div><div style="font-weight:600;margin-bottom:8px">MRZ read (${res.type==='TD3'?'passport':'ID card'})</div><div class="notes" style="margin:0 0 12px"><b>${esc(res.number)}</b>${res.numOk?' ✓':' ⚠ check digit failed, please verify'}<br>${esc(res.c3)}${res.nm?' · '+esc(res.nm):''}<br>Born ${mrzDate(res.dob)} · expires ${mrzDate(res.exp,1)}</div><div class="row"><button class="btn" id="m0">Cancel</button><button class="btn pri" id="m1" style="margin-left:auto">Use number</button></div></div>`;
+    md.querySelector('#m0').onclick=back;
+    md.querySelector('#m1').onclick=()=>{back();cb(res)};
+  }).catch(e=>{md.innerHTML=`<div><div style="font-weight:600;margin-bottom:8px">Could not read</div><div class="notes" style="margin:0 0 12px">${esc(String((e&&e.message)||e))}</div><button class="btn" id="m0" style="width:100%">OK</button></div>`;md.querySelector('#m0').onclick=back})}
+
 /* ---------- settings ---------- */
 function setup(msg){const md=$('#ask');
   md.innerHTML=`<div><div style="font-weight:600;margin-bottom:8px">${esc((msg||'Access key').trim())}</div><form id="kf"><input class="in" id="kt" type="password" autocomplete="current-password" placeholder="Enter your access key (from api.php)" autocapitalize="off" autocorrect="off" spellcheck="false" value="${esc(token)}"><div class="row" style="margin-top:12px"><button class="btn" type="button" id="k0">Cancel</button><button class="btn pri" type="submit" style="margin-left:auto">Connect</button></div></form></div>`;
@@ -554,7 +598,7 @@ function openSettings(){const md=$('#ask');
 $('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v27';
+const VER='v28';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();

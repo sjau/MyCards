@@ -40,7 +40,7 @@ server {
 1. Copy keys.example.php to data/keys.php and put a long random key per person/device into it
    ($WRITE_KEYS = can edit, $READ_KEYS = view only). data/ holds your keys, cards and photos:
    back up only that folder, and when updating the app upload everything except data/.
-2. Upload this whole folder to your server (HTTPS required), e.g. https://example.com/MyCards/
+2. Upload this whole folder to your server (HTTPS required), e.g. https://example.com/MyCards/ — including ocr/ (the ~6 MB OCR engine behind "Read MRZ from photo").
    Make sure data/ is writable by PHP (chmod 750/770).
    Apache: data/.htaccess already blocks direct access. Nginx: add  location /wallet/data { deny all; }
 3. Open the URL in Chrome on Android -> menu -> "Install app" / "Add to Home screen".
