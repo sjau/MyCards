@@ -531,10 +531,11 @@ function scan(){return new Promise(async res=>{
 })}
 
 /* ---------- settings ---------- */
-function setup(msg){
-  const t=prompt((msg||'')+'Enter your access key (from api.php).',token);
-  if(t!==null){token=t.trim();W('token',token);role='';W('role','');sync()}
-}
+function setup(msg){const md=$('#ask');
+  md.innerHTML=`<div><div style="font-weight:600;margin-bottom:8px">${esc((msg||'Access key').trim())}</div><form id="kf"><input class="in" id="kt" type="password" autocomplete="current-password" placeholder="Enter your access key (from api.php)" autocapitalize="off" autocorrect="off" spellcheck="false" value="${esc(token)}"><div class="row" style="margin-top:12px"><button class="btn" type="button" id="k0">Cancel</button><button class="btn pri" type="submit" style="margin-left:auto">Connect</button></div></form></div>`;
+  md.querySelector('#k0').onclick=back;
+  md.querySelector('#kf').onsubmit=ev=>{ev.preventDefault();token=md.querySelector('#kt').value.trim();W('token',token);role='';W('role','');back();sync()};
+  md.onclose=null;show(md)}
 async function signOut(){ // local reset — works with any key, valid or not, and offline
   if(!confirm('Sign out?\n\nThe access key and this device\'s local copy of the cards (including cached photos) are removed. Synced cards come back after entering the key again.'))return;
   cards={};usage={};token='';role='';save();W('usage',{});W('token','');W('role','');
@@ -549,7 +550,7 @@ function openSettings(){const md=$('#ask');
 $('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v20';
+const VER='v21';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
