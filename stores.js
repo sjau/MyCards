@@ -3,7 +3,7 @@ const ART={"coop": {"c": "#205ca2", "w": 0.869, "lo": 0}, "ikea": {"c": "#0157ac
 const POPULAR=['coop','migros','ikea','manor','ochsner','lidl','aligro','rega'];
 // Store catalog: "Name|website|countries|#colour (optional)|artwork id (optional, file art/<id>.png)|barcode type (optional, default for manual entry)|category (optional: loyalty, member, id, docs, other — default loyalty)" (C = Switzerland, D = Germany, A = Austria). Edit freely.
 const STORES=[
-"Rega|rega.ch|C||rega|CODE128","Touring Club Schweiz|tcs.ch|C||tcs|EAN13|member","TopCC|topcc.ch|C||topcc|CODE39","Aligro|aligro.ch|C||aligro",
+"Rega|rega.ch|C||rega|CODE128|member","Touring Club Schweiz|tcs.ch|C||tcs|EAN13|member","TopCC|topcc.ch|C||topcc|CODE39","Aligro|aligro.ch|C||aligro",
 "Migros|migros.ch|C||migros|EAN13","Coop|coop.ch|C||coop|EAN13","Denner|denner.ch|C","Aldi Suisse|aldi-suisse.ch|C","Lidl|lidl.ch|CDA||lidl",
 "Manor|manor.ch|C||manor","Volg|volg.ch|C","Spar Schweiz|spar.ch|C","Landi|landi.ch|C","Avec|avec.ch|C","Kiosk (k kiosk)|kkiosk.ch|C",
 "Interdiscount|interdiscount.ch|C","Melectronics|melectronics.ch|C","Galaxus / Digitec|galaxus.ch|C","Fust|fust.ch|C","Brack|brack.ch|C","MediaMarkt Schweiz|mediamarkt.ch|C",
