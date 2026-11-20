@@ -28,12 +28,14 @@ if ($a === 'list') {
   if (!$c || empty($c['id'])) { http_response_code(400); exit; }
   $f = $D . 'c_' . sid($c['id']) . '.json';
   if (is_file($f)) { $old = json_decode(file_get_contents($f), true); if (($old['u'] ?? 0) > ($c['u'] ?? 0)) { echo '{"skipped":1}'; exit; } }
-  file_put_contents($f, json_encode($c), LOCK_EX); echo '{"ok":1}';
+  if(@file_put_contents($f, json_encode($c), LOCK_EX)===false){http_response_code(500);exit('could not write: is data/ writable by PHP?');}
+  echo '{"ok":1}';
 } elseif ($a === 'up') {
   if ($role !== 'write') { http_response_code(403); exit('read-only'); }
   $b = file_get_contents('php://input');
   if (strlen($b) < 100 || strlen($b) > 8000000) { http_response_code(413); exit; }
-  file_put_contents($D . 'img/' . sid($_GET['n'] ?? '') . '.jpg', $b); echo '{"ok":1}';
+  if(@file_put_contents($D . 'img/' . sid($_GET['n'] ?? '') . '.jpg', $b)===false){http_response_code(500);exit('could not write: is data/ writable by PHP?');}
+  echo '{"ok":1}';
 } elseif ($a === 'img') {
   $f = $D . 'img/' . sid($_GET['n'] ?? '') . '.jpg';
   if (!is_file($f)) { http_response_code(404); exit; }

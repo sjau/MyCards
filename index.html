@@ -148,7 +148,7 @@ async function sync(){
   }catch(e){
     if(e.message==='401'){
       if(role){await wipe();$('#dot').textContent='access revoked'}else $('#dot').textContent='wrong key'
-    }else $('#dot').textContent='offline'}
+    }else if(e.message==='500')$('#dot').textContent='save failed on server';else $('#dot').textContent='offline'}
 }
 
 /* ---------- list ---------- */
@@ -554,7 +554,7 @@ function openSettings(){const md=$('#ask');
 $('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v24';
+const VER='v25';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
