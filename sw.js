@@ -1,4 +1,4 @@
-const NS=location.pathname.replace(/[^/]+$/,''),C='wallet-v34'+NS,SHELL=['./','index.html','manifest.json','jsbarcode.min.js','qrcode.js','stores.js','icon-192.png','icon-512.png'];
+const NS=location.pathname.replace(/[^/]+$/,''),C='wallet-v35'+NS,SHELL=['./','index.html','manifest.json','jsbarcode.min.js','qrcode.js','stores.js','icon-192.png','icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(SHELL)));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C&&(/^wallet-v\d+$/.test(x)||x.replace(/^wallet-v\d+/,'')===NS)).map(x=>caches.delete(x)))).then(()=>clients.claim()))});
 self.addEventListener('fetch',e=>{
