@@ -342,7 +342,7 @@ function openEdit(id,pre,showPhotos){
     <label>Type</label><select class="in" id="c">${CATS.map(([k,n])=>`<option value="${k}" ${k===s.cat?'selected':''}>${n}</option>`).join('')}</select>
     ${!CARD(s)?`<label>Document (used to draw the preview with the national flag)</label><div class="row"><select class="in" id="dt">${DTS.map(([k,n])=>`<option value="${k}" ${k===(s.dtype||'')?'selected':''}>${n}</option>`).join('')}</select><select class="in" id="co"><option value="">Country…</option>${COUNTRIES.map(([k,n])=>`<option value="${k}" ${k===s.country?'selected':''}>${esc(n)}</option>`).join('')}</select></div>`:''}
     <label>Barcode / number (optional)</label><div class="row"><input class="in" id="cd" value="${esc(s.code)}"><button class="btn" id="sc">Scan</button></div>
-    ${!CARD(s)?`<div style="margin-top:8px"><button class="btn" id="mz" style="width:100%">Read MRZ from photo</button></div>`:''}
+    ${!CARD(s)?`<div style="margin-top:8px"><button class="btn" id="mz" style="width:100%">Scan MRZ (camera or photo)</button></div>`:''}
     <label>Barcode format</label><select class="in" id="f">${FMTS.map(([k,n])=>`<option value="${k}" ${k===s.fmt?'selected':''}>${n}</option>`).join('')}</select>
     ${ecHTML(s)}
     ${s.art?'':`<label>Colour</label><div class="sw">${COLORS.map(k=>`<i data-k="${k}" style="background:${k}" class="${k===s.color?'on':''}"></i>`).join('')}</div>`}
@@ -377,10 +377,10 @@ function openEdit(id,pre,showPhotos){
     e.querySelectorAll('.th [data-k]').forEach(d=>d.onclick=()=>{grab();pick(d.dataset.k)});
     
     e.querySelector('#sc').onclick=async()=>{grab();const r=await scan();if(r&&r.code){s.code=r.code;s.fmt=r.fmt}draw()};
-    const mz=e.querySelector('#mz');if(mz)mz.onclick=()=>{grab();const fi=e.querySelector('#fi');fi.multiple=false;fi.value='';
-      fi.onchange=async()=>{const f=fi.files[0];if(!f)return;const r=await cropper(f,4);if(!r)return;
-        askMRZ(r.blob,res=>{s.code=res.number;if(!s.dtype)s.dtype=res.type==='TD3'?'PASSPORT':'ID';if(!s.country&&res.c2)s.country=res.c2;draw();toast('Read from MRZ')})};
-      fi.click()};
+    const mz=e.querySelector('#mz');if(mz)mz.onclick=async()=>{grab();
+      const cap=await capture();if(!cap)return;await new Promise(r=>setTimeout(r,250));
+      const r=await cropper(cap.blob,4);if(!r)return;await new Promise(r=>setTimeout(r,250));
+      askMRZ(r.blob,res=>{s.code=res.number;if(!s.dtype)s.dtype=res.type==='TD3'?'PASSPORT':'ID';if(!s.country&&res.c2)s.country=res.c2;draw();toast('Read from MRZ')})};
     if(old)e.querySelector('#dl').onclick=()=>{if(!confirm('Delete "'+old.name+'"?'))return;cards[s.id]={...old,del:true,u:Date.now()};save();closeAll(2);render();sync()};
     e.querySelector('#sv').onclick=async()=>{try{await (async()=>{grab();if(!s.name){alert('Please enter a name.');return}
       const b=e.querySelector('#sv');b.textContent='Saving…';b.disabled=true;
@@ -536,6 +536,33 @@ function scan(){return new Promise(async res=>{
   const loop=async()=>{if(done)return;try{const r=await det.detect(v);if(r.length)return hit(r[0])}catch{}setTimeout(loop,150)};loop();
 })}
 
+/* ---------- live capture (for the MRZ reader) ---------- */
+function capture(){return new Promise(async res=>{
+  const o=$('#scan'),have=navigator.mediaDevices&&navigator.mediaDevices.getUserMedia;let st,done=false;
+  const stop=()=>{st&&st.getTracks().forEach(t=>t.stop())};
+  const fin=r=>{if(done)return;done=true;stop();res(r);history.back()};
+  o.innerHTML=`<div class="bar"><button class="ib" id="cb">←</button><h2>Scan MRZ</h2></div>
+    <div class="sv">${have?'<video playsinline muted></video><div class="fr"></div>':'<div class="nos">Camera not available. Use "Choose a photo instead".</div>'}</div>
+    <button class="btn pri" id="tc" style="width:calc(100% - 24px);margin:12px;padding:14px;font-size:18px">Take photo</button>
+    <button class="lnk" id="cp">Choose a photo instead</button><input type="file" accept="image/*" id="cf" hidden>`;
+  o.onclose=()=>{if(!done){done=true;stop();res(null)}};
+  o.querySelector('#cb').onclick=()=>fin(null);
+  const fi=o.querySelector('#cf');
+  o.querySelector('#cp').onclick=()=>fi.click();
+  fi.onchange=()=>{const f=fi.files[0];if(f)fin({blob:f})};
+  show(o);if(!have)return;
+  try{st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})}
+  catch{o.querySelector('.sv').innerHTML='<div class="nos">Camera not available. Use "Choose a photo instead".</div>';return}
+  if(done){stop();return}
+  const v=o.querySelector('video');v.srcObject=st;await v.play().catch(()=>{});
+  o.querySelector('#tc').onclick=()=>{
+    const w=v.videoWidth,h=v.videoHeight;if(!w)return;
+    const k=Math.min(1,2000/Math.max(w,h)),cv=document.createElement('canvas');
+    cv.width=Math.round(w*k);cv.height=Math.round(h*k);
+    cv.getContext('2d').drawImage(v,0,0,cv.width,cv.height);
+    cv.toBlob(b=>fin({blob:b}),'image/jpeg',.9)};
+})}
+
 /* ---------- MRZ reader (passports / ID cards) ---------- */
 const MRZ2={CHE:'CH',DEU:'DE',AUT:'AT',LIE:'LI',FRA:'FR',ITA:'IT',GBR:'GB',IRL:'IE',NLD:'NL',BEL:'BE',LUX:'LU',ESP:'ES',PRT:'PT',GRC:'GR',TUR:'TR',POL:'PL',CZE:'CZ',SVK:'SK',HUN:'HU',ROU:'RO',BGR:'BG',HRV:'HR',SRB:'RS',SVN:'SI',BIH:'BA',MKD:'MK',ALB:'AL',EST:'EE',LVA:'LV',LTU:'LT',FIN:'FI',SWE:'SE',NOR:'NO',DNK:'DK',ISL:'IS',USA:'US',CAN:'CA',MEX:'MX',BRA:'BR',ARG:'AR',CHL:'CL',COL:'CO',PER:'PE',AUS:'AU',NZL:'NZ',JPN:'JP',KOR:'KR',CHN:'CN',IND:'IN',IDN:'ID',THA:'TH',SGP:'SG',MYS:'MY',PHL:'PH',VNM:'VN',UKR:'UA',RUS:'RU',BLR:'BY',KAZ:'KZ',ISR:'IL',SAU:'SA',ARE:'AE',QAT:'QA',KWT:'KW',EGY:'EG',MAR:'MA',TUN:'TN',DZA:'DZ',ZAF:'ZA',KEN:'KE',NGA:'NG',GHA:'GH'};
 const mrzV=c=>c==='<'?0:/[0-9]/.test(c)?+c:/[A-Z]/.test(c)?c.charCodeAt(0)-55:null;
@@ -598,7 +625,7 @@ function openSettings(){const md=$('#ask');
 $('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v31';
+const VER='v32';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
