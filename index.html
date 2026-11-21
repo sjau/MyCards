@@ -594,22 +594,25 @@ const mrzFix=(s,chk)=>{ // recover 0/O, 1/I and friends via the check digit
   return hit};
 const mrzDate=(s,fut)=>{const ny=+new Date().getFullYear()%100;let y=+s.slice(0,2);y+=(fut?2000:(y>ny-2?1900:2000));return y+'-'+s.slice(2,4)+'-'+s.slice(4,6)};
 function mrzParse(txt){
-  const L=txt.toUpperCase().split(/\n+/).map(s=>s.replace(/[^A-Z0-9<]/g,'')).filter(s=>s.length>=26);
+  const raw=txt.toUpperCase().split(/\n+/).map(s=>s.replace(/[^A-Z0-9<]/g,'')).filter(s=>s.length>=16);
+  const L=[];
+  for(const s of raw){if(s.length>=60)for(let o=0;o<s.length;o+=44)L.push(s.slice(o,o+44));else L.push(s)}
   const out=[];
-  for(let i=0;i+1<L.length;i++){const a=L[i],b=L[i+1];
-    if(a.length>=42&&b.length>=42&&a[1]==='<'){
+  const nm=a=>a.slice(5).split('<<').map(x=>x.replace(/</g,' ').trim()).filter(Boolean).join(' ');
+  for(let i=0;i+1<L.length;i++)for(let j=i+1;j<=i+2&&j<L.length;j++){const a=L[i],b=L[j];
+    if(a.length>=10&&b.length>=28&&a[1]==='<'){
       const n0=b.slice(0,9),n=mrzFix(n0,b[9])||n0;
       if(n.replace(/</g,'').length>=5){const ok=mrzOk(n,b[9]);
         const dob=mrzD(b.slice(13,19)),exp=mrzD(b.slice(21,27));
-        out.push({type:'TD3',score:(ok?3:0)+(mrzOk(dob,b[19])?1:0)+(mrzOk(exp,b[27])?1:0),number:n.replace(/</g,''),numOk:ok,dob,exp,c3:b.slice(10,13),nm:a.slice(5).split('<<').map(x=>x.replace(/</g,' ').trim()).filter(Boolean).join(' ')})}
+        out.push({type:'TD3',score:(ok?3:0)+(mrzOk(dob,b[19])?1:0)+(mrzOk(exp,b[27])?1:0),number:n.replace(/</g,''),numOk:ok,dob,exp,c3:b.slice(10,13),nm:nm(a)})}
     }
   }
   for(let i=0;i+2<L.length;i++){const a=L[i],b=L[i+1],c=L[i+2];
-    if(a.length>=29&&b.length>=29&&c.length>=29&&/^[A-Z<]{2}/.test(a)&&/^[0-9OILZSBG]{6}/.test(b)){
+    if(a.length>=15&&b.length>=18&&c.length>=5&&/^[A-Z<]{2}/.test(a)&&/^[0-9OILZSBG]{6}/.test(b)){
       const n0=a.slice(5,14),n=mrzFix(n0,a[14])||n0;
       if(n.replace(/</g,'').length>=5){const ok=mrzOk(n,a[14]);
         const dob=mrzD(b.slice(0,6)),exp=mrzD(b.slice(8,14));
-        out.push({type:'TD1',score:(ok?3:0)+(mrzOk(dob,b[6])?1:0)+(mrzOk(exp,b[14])?1:0),number:n.replace(/</g,''),numOk:ok,dob,exp,c3:b.slice(15,18),nm:c.split('<<').map(x=>x.replace(/</g,' ').trim()).filter(Boolean).join(' ')})}
+        out.push({type:'TD1',score:(ok?3:0)+(mrzOk(dob,b[6])?1:0)+(mrzOk(exp,b[14])?1:0),number:n.replace(/</g,''),numOk:ok,dob,exp,c3:b.slice(15,18),nm:nm(c)})}
     }
   }
   if(!out.length)return null;
@@ -653,7 +656,7 @@ function openSettings(){const md=$('#ask');
 $('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v38';
+const VER='v39';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
