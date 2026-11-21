@@ -88,7 +88,7 @@ const STORES=[
 "Obi Österreich|obi.at|A||obi|ITF","Bauhaus Österreich|bauhaus.at|A||bauhaus|CODE128","Hornbach Österreich|hornbach.at|A","Lagerhaus|lagerhaus.at|A","Leiner|leiner.at|A","XXXLutz Österreich|xxxlutz.at|A||xxxlutz|ITF","Möbelix|moebelix.at|A",
 "Kastner & Öhler|kastner-oehler.at|A","Palmers|palmers.at|A","Tchibo Österreich|tchibo.at|A||tchibo|CODE128","Fressnapf Österreich|fressnapf.at|A||fressnapf|QR",
 "ÖBB Vorteilscard|oebb.at|A","OMV VIVA|omv.at|A","BP Österreich|bp.com|A","Cineplexx|cineplexx.at|A",
-"IKEA|ikea.com|CDA||ikea","H&M|hm.com|CDA||hm|CODE128","Starbucks|starbucks.com|CDA||starbucks|none","McDonald's|mcdonalds.com|CDA||mcdonalds|QR","Miles & More|miles-and-more.com|CDA||miles|ITF",
+"IKEA|ikea.com|CDA||ikea","H&M|hm.com|CDA||hm|CODE128","Starbucks|starbucks.com|CDA||starbucks|PDF417","McDonald's|mcdonalds.com|CDA||mcdonalds|QR","Miles & More|miles-and-more.com|CDA||miles|ITF",
 "Accor Live Limitless|accor.com|||accor|QR","Achillea||||achillea|CODE128","ACS||||acs|CODE128|member","Aeroplan|aeroplan.com|||aeroplan|CODE128","Air Algérie|airalgerie.dz|||airalgerie|CODE128",
 "Air Europa|aireuropa.com|||aireuropa|CODE128","Alamo|alamo.com|||alamo|CODE128","Alaska Airlines|alaskaair.com|||alaskaairlines|CODE128","ANOUK Fashion||||anouk|CODE128",
 "Apotheke||||apotheke|CODE128","Arcaplanet||||arcaplanet|CODE128","Avis|avis.com|||avis|CODE128","Bayard||||bayard|CODE39","Beldona||||beldona|CODE128",
@@ -120,11 +120,11 @@ const STORES=[
 "Veloplus|veloplus.ch|||veloplus|CODE39","vinazion|vinazion.ch|||vinazion|CODE39","Virgin Atlantic|virginatlantic.com|||virginatlantic|CODE128","VomFASS||||vomfass|CODE128",
 "Walder Schuhe|walderschuhe.ch|||walderschuhe|CODE128","Schweizer Wanderwege|wanderwege.ch|||wanderwege|CODE128|member","WestJet|westjet.com|||westjet|CODE128",
 "Wyndham|wyndhamhotels.com|||wyndham|CODE128","Wyss||||wyss|CODE128","Yves Rocher|yves-rocher.com|||yvesrocher|CODE128",
-"American Airlines|aa.com|||americanairlines|none",
-"easyJet|easyjet.com|||easyjet|none",
-"Emirates|emirates.com|||emirates|none",
-"Nespresso|nespresso.com|||nespresso|none",
-"TopPharm|toppharm.ch|||toppharm|none",
-"United Airlines|united.com|||unitedairlines|none",
-"Westfield|westfield.com|||westfield|none"
+"American Airlines|aa.com|||americanairlines|PDF417",
+"easyJet|easyjet.com|||easyjet|PDF417",
+"Emirates|emirates.com|||emirates|PDF417",
+"Nespresso|nespresso.com|||nespresso|PDF417",
+"TopPharm|toppharm.ch|||toppharm|DATAMATRIX",
+"United Airlines|united.com|||unitedairlines|PDF417",
+"Westfield|westfield.com|||westfield|PDF417"
 ].map(x=>{const[n,d,c,col,art,fmt,ct]=x.split('|');return{n,d,c,col:col||'',art:art||'',fmt:fmt||'',cat:ct||'loyalty'}});
