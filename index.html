@@ -437,7 +437,7 @@ function photoMenu(s,i,blobs,after,pick){
     <div class="seg">${SIDES.map(([k,n])=>`<button class="btn ${m.side===k?'on':''}" data-s="${k}">${n}</button>`).join('')}</div>
     <label style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="od" ${m.old?'checked':''}> Old version (kept, shown under "Older versions")</label>
     <input class="in" id="lb" placeholder="Note, e.g. expired 2019" value="${esc(m.label||'')}" style="margin-top:8px">
-    <div class="row" style="margin-top:14px">${m.side==='other'?'':'<button class="btn" id="nw">Replace</button>'}<button class="btn" id="ce">Crop / rotate</button><button class="btn bad" id="rm">Remove</button><button class="btn pri" id="ok" style="margin-left:auto">Done</button></div></div>`;
+    <div class="row" style="margin-top:14px;flex-wrap:wrap">${m.side==='other'?'':'<button class="btn" id="nw">Replace</button>'}<button class="btn" id="ce">Crop / rotate</button><button class="btn" id="rt">Rotate</button><button class="btn bad" id="rm">Remove</button><button class="btn pri" id="ok" style="margin-left:auto">Done</button></div></div>`;
     md.querySelectorAll('[data-s]').forEach(b=>b.onclick=async()=>{const p=m.side;m.side=b.dataset.s;if(!await conflict(s,m))m.side=p;d()});
     md.querySelector('#od').onchange=async ev=>{const w=m.old;m.old=ev.target.checked;if(!await conflict(s,m))m.old=w;d()};
     md.querySelector('#lb').oninput=ev=>{m.label=ev.target.value};
@@ -449,6 +449,12 @@ function photoMenu(s,i,blobs,after,pick){
       const r=await cropper(src);
       if(r){const n=s.id+'_'+rid();blobs[n]=r.blob;m.n=n}
       d()};
+    md.querySelector('#rt').onclick=async()=>{ // rotate 90°: swaps landscape <-> portrait
+      const src=blobs[m.n]||await (await fetch(iu(m.n))).blob();
+      const bm=await createImageBitmap(src);
+      const cv=document.createElement('canvas');cv.width=bm.height;cv.height=bm.width;
+      const g=cv.getContext('2d');g.translate(cv.width/2,cv.height/2);g.rotate(Math.PI/2);g.drawImage(bm,-bm.width/2,-bm.height/2);
+      cv.toBlob(b=>{const n=s.id+'_'+rid();blobs[n]=b;m.n=n;d()},'image/jpeg',.9)};
   };
   md.onclose=after;d();show(md);
 }
@@ -625,7 +631,7 @@ function openSettings(){const md=$('#ask');
 $('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v32';
+const VER='v33';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
