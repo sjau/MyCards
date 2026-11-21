@@ -380,7 +380,13 @@ function openEdit(id,pre,showPhotos){
     const mz=e.querySelector('#mz');if(mz)mz.onclick=async()=>{grab();
       const cap=await capture();if(!cap)return;await new Promise(r=>setTimeout(r,250));
       const r=await cropper(cap.blob,5);if(!r)return;await new Promise(r=>setTimeout(r,250));
-      askMRZ(r.blob,res=>{s.code=res.number;if(!s.dtype)s.dtype=res.type==='TD3'?'PASSPORT':'ID';if(!s.country&&res.c2)s.country=res.c2;draw();toast('Read from MRZ')})};
+      askMRZ(r.blob,res=>{s.code=res.number;
+        if(!s.dtype)s.dtype=res.type==='TD3'?'PASSPORT':'ID';
+        if(res.c2)s.country=res.c2;
+        if(res.nm)s.name=tc(res.nm);
+        const vl='Born '+mrzDate(res.dob)+' · expires '+mrzDate(res.exp,1);
+        if(!(s.notes||'').includes(vl))s.notes=(s.notes?s.notes+'\n':'')+vl;
+        draw();toast('Read from MRZ')})};
     if(old)e.querySelector('#dl').onclick=()=>{if(!confirm('Delete "'+old.name+'"?'))return;cards[s.id]={...old,del:true,u:Date.now()};save();closeAll(2);render();sync()};
     e.querySelector('#sv').onclick=async()=>{try{await (async()=>{grab();if(!s.name){alert('Please enter a name.');return}
       const b=e.querySelector('#sv');b.textContent='Saving…';b.disabled=true;
@@ -610,6 +616,7 @@ function mrzParse(txt){
   out.sort((x,y)=>y.score-x.score);
   const r=out[0];r.c2=MRZ2[r.c3]||'';return r;
 }
+const tc=s=>s.toLowerCase().replace(/(^|[\s\-'])([a-z])/g,(m,a,b)=>a+b.toUpperCase()); // MRZ name -> "Surname Anna Maria"
 function askMRZ(blob,cb){const md=$('#ask');
   md.innerHTML=`<div><div style="font-weight:600;margin-bottom:6px">Reading the MRZ…</div><div class="notes" style="margin:0">The first time this downloads the OCR engine (~6 MB) and can take a moment.</div></div>`;
   md.onclose=null;show(md);
@@ -618,7 +625,7 @@ function askMRZ(blob,cb){const md=$('#ask');
     const r=await w.recognize(blob);await w.terminate();
     const res=mrzParse(r.data.text||'');
     if(!res){md.innerHTML=`<div><div style="font-weight:600;margin-bottom:8px">No MRZ found</div><div class="notes" style="margin:0 0 12px">Photograph just the two or three text lines at the bottom of the document — straight, well lit, filling the frame.</div><button class="btn" id="m0" style="width:100%">OK</button></div>`;md.querySelector('#m0').onclick=back;return}
-    md.innerHTML=`<div><div style="font-weight:600;margin-bottom:8px">MRZ read (${res.type==='TD3'?'passport':'ID card'})</div><div class="notes" style="margin:0 0 12px"><b>${esc(res.number)}</b>${res.numOk?' ✓':' ⚠ check digit failed, please verify'}<br>${esc(res.c3)}${res.nm?' · '+esc(res.nm):''}<br>Born ${mrzDate(res.dob)} · expires ${mrzDate(res.exp,1)}</div><div class="row"><button class="btn" id="m0">Cancel</button><button class="btn pri" id="m1" style="margin-left:auto">Use number</button></div></div>`;
+    md.innerHTML=`<div><div style="font-weight:600;margin-bottom:8px">MRZ read (${res.type==='TD3'?'passport':'ID card'})</div><div class="notes" style="margin:0 0 12px"><b>${esc(res.number)}</b>${res.numOk?' ✓':' ⚠ check digit failed, please verify'}${res.nm?'<br>'+esc(tc(res.nm)):''}<br>${esc(res.c3)}${res.c2?' · '+res.c2:''}<br>Born ${mrzDate(res.dob)} · expires ${mrzDate(res.exp,1)}</div><div class="row"><button class="btn" id="m0">Cancel</button><button class="btn pri" id="m1" style="margin-left:auto">Apply</button></div></div>`;
     md.querySelector('#m0').onclick=back;
     md.querySelector('#m1').onclick=()=>{back();cb(res)};
   }).catch(e=>{md.innerHTML=`<div><div style="font-weight:600;margin-bottom:8px">Could not read</div><div class="notes" style="margin:0 0 12px">${esc(String((e&&e.message)||e))}</div><button class="btn" id="m0" style="width:100%">OK</button></div>`;md.querySelector('#m0').onclick=back})}
@@ -646,7 +653,7 @@ function openSettings(){const md=$('#ask');
 $('#sync').onclick=openSettings;
 
 /* ---------- start ---------- */
-const VER='v37';
+const VER='v38';
 addEventListener('error',e=>{const d=$('#dot');if(d)d.textContent='error: '+e.message});
 if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data==='update'&&!stack.length)location.reload()});
 render();
