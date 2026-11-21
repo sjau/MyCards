@@ -56,7 +56,9 @@ const ART={
  "payback": {"c": "#4a64ae", "w": 0.865, "lo": 0}, "peekcloppenburg": {"c": "#091e3d", "w": 0.869, "lo": 0}, "pfister": {"c": "#231f20", "w": 0.869, "lo": 0},
  "pkz": {"c": "#010101", "w": 0.835, "lo": 0}, "sephora": {"c": "#010101", "w": 0.867, "lo": 0}, "spar": {"c": "#2d963a", "w": 0.869, "lo": 0},
  "sunstore": {"c": "#ffffff", "w": 0.869, "lo": 0}, "takko": {"c": "#feea00", "w": 0.829, "lo": 0}, "tchibo": {"c": "#203d75", "w": 0.867, "lo": 0},
- "xxxlutz": {"c": "#e40613", "w": 0.869, "lo": 0}};
+ "xxxlutz": {"c": "#e40613", "w": 0.869, "lo": 0}, "americanairlines": {"c": "#202425", "w": 0.861, "lo": 0}, "easyjet": {"c": "#ff6600", "w": 0.869, "lo": 0},
+ "emirates": {"c": "#d71a20", "w": 0.404, "lo": 0}, "nespresso": {"c": "#050505", "w": 0.851, "lo": 0}, "starbucks": {"c": "#213b32", "w": 0.288, "lo": 0},
+ "toppharm": {"c": "#ffffff", "w": 0.849, "lo": 0}, "unitedairlines": {"c": "#0338a0", "w": 0.869, "lo": 0}, "westfield": {"c": "#cb2b1f", "w": 0.837, "lo": 0}};
 const POPULAR=['coop','migros','ikea','manor','ochsner','lidl','aligro','rega'];
 // Store catalog: "Name|website|countries|#colour (optional)|artwork id (optional, file art/<id>.png)|barcode type (optional, default for manual entry)|category (optional: loyalty, member, id, docs, other — default loyalty)" (C = Switzerland, D = Germany, A = Austria). Edit freely.
 const STORES=[
@@ -86,7 +88,7 @@ const STORES=[
 "Obi Österreich|obi.at|A||obi|ITF","Bauhaus Österreich|bauhaus.at|A||bauhaus|CODE128","Hornbach Österreich|hornbach.at|A","Lagerhaus|lagerhaus.at|A","Leiner|leiner.at|A","XXXLutz Österreich|xxxlutz.at|A||xxxlutz|ITF","Möbelix|moebelix.at|A",
 "Kastner & Öhler|kastner-oehler.at|A","Palmers|palmers.at|A","Tchibo Österreich|tchibo.at|A||tchibo|CODE128","Fressnapf Österreich|fressnapf.at|A||fressnapf|QR",
 "ÖBB Vorteilscard|oebb.at|A","OMV VIVA|omv.at|A","BP Österreich|bp.com|A","Cineplexx|cineplexx.at|A",
-"IKEA|ikea.com|CDA||ikea","H&M|hm.com|CDA||hm|CODE128","Starbucks|starbucks.com|CDA","McDonald's|mcdonalds.com|CDA||mcdonalds|QR","Miles & More|miles-and-more.com|CDA||miles|ITF",
+"IKEA|ikea.com|CDA||ikea","H&M|hm.com|CDA||hm|CODE128","Starbucks|starbucks.com|CDA||starbucks|none","McDonald's|mcdonalds.com|CDA||mcdonalds|QR","Miles & More|miles-and-more.com|CDA||miles|ITF",
 "Accor Live Limitless|accor.com|||accor|QR","Achillea||||achillea|CODE128","ACS||||acs|CODE128|member","Aeroplan|aeroplan.com|||aeroplan|CODE128","Air Algérie|airalgerie.dz|||airalgerie|CODE128",
 "Air Europa|aireuropa.com|||aireuropa|CODE128","Alamo|alamo.com|||alamo|CODE128","Alaska Airlines|alaskaair.com|||alaskaairlines|CODE128","ANOUK Fashion||||anouk|CODE128",
 "Apotheke||||apotheke|CODE128","Arcaplanet||||arcaplanet|CODE128","Avis|avis.com|||avis|CODE128","Bayard||||bayard|CODE39","Beldona||||beldona|CODE128",
@@ -117,5 +119,12 @@ const STORES=[
 "Transa|transa.ch|||transa|CODE128","Turkish Airlines|turkishairlines.com|||turkish|CODE128","VAN GRAAF|vangraaf.com|||vangraaf|CODE128","Velocity|velocityfrequentflyer.com|||velocity|CODE128",
 "Veloplus|veloplus.ch|||veloplus|CODE39","vinazion|vinazion.ch|||vinazion|CODE39","Virgin Atlantic|virginatlantic.com|||virginatlantic|CODE128","VomFASS||||vomfass|CODE128",
 "Walder Schuhe|walderschuhe.ch|||walderschuhe|CODE128","Schweizer Wanderwege|wanderwege.ch|||wanderwege|CODE128|member","WestJet|westjet.com|||westjet|CODE128",
-"Wyndham|wyndhamhotels.com|||wyndham|CODE128","Wyss||||wyss|CODE128","Yves Rocher|yves-rocher.com|||yvesrocher|CODE128"
+"Wyndham|wyndhamhotels.com|||wyndham|CODE128","Wyss||||wyss|CODE128","Yves Rocher|yves-rocher.com|||yvesrocher|CODE128",
+"American Airlines|aa.com|||americanairlines|none",
+"easyJet|easyjet.com|||easyjet|none",
+"Emirates|emirates.com|||emirates|none",
+"Nespresso|nespresso.com|||nespresso|none",
+"TopPharm|toppharm.ch|||toppharm|none",
+"United Airlines|united.com|||unitedairlines|none",
+"Westfield|westfield.com|||westfield|none"
 ].map(x=>{const[n,d,c,col,art,fmt,ct]=x.split('|');return{n,d,c,col:col||'',art:art||'',fmt:fmt||'',cat:ct||'loyalty'}});
